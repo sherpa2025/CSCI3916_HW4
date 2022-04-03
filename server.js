@@ -139,20 +139,54 @@ router.route('/movies')
     })
 
 
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        if (req.query && req.query.reviews && req.query.reviews === "true") {
+
+            Movie.findOne({title: req.params.movie_title}, function (err, movie) {
+                if (err) {
+                    return res.status(403).json({success: false, message: "Unable to get reviews for title passed in"});
+                } else if (!movie) {
+                    return res.status(403).json({success: false, message: "Unable to find title passed in."});
+                } else {
+
+                    Movie.aggregate()
+                        .match({_id: mongoose.Types.ObjectId(movie._id)})
+                        .lookup({from: 'reviews', localField: '_id', foreignField: 'movie_id', as: 'reviews'})
+                        .addFields({averaged_rating: {$avg: "$reviews.rating"}})
+                        .exec(function (err, mov) {
+                            if (err) {
+                                return res.status(403).json({
+                                    success: false,
+                                    message: "The movie title parameter was not found."
+                                });
+                            } else {
+                                return res.status(200).json({
+                                    success: true,
+                                    message: "Movie title passed in and it's reviews were found.",
+                                    movie: mov
+                                });
+                            }
+
+                        })
+                }
+            })
+        }
+
+
+
+
 // getting and updating a specific movie with movie title as parameter
 router.route('/movies/:title')
     .get(authJwtController.isAuthenticated, function (req, res) {
         var title = req.params.title;
 
-        if (req.query && req.query.reviews && req.query.reviews === "true"){
+        if (req.query && req.query.reviews && req.query.reviews === "true")
+        {
 
-            Movie.findOne({title: req.params.title}).exec(function (err, movieFound) {
+            Movie.findOne({title: req.params.title},function(err, movieFound) {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to get reviews for title passed in"});
-                }
-
-                else if(movieFound)
-                {
+                } else if (movieFound) {
                     Movie.aggregate([
                         {
                             $match: {
@@ -168,17 +202,22 @@ router.route('/movies/:title')
                                     as: "movieReviews"
                                 }
                         }
-                    ]).exec((err, movieReview) => {
-                        if (err) res.json({message: "Failed"});
-                        res.json(movieReview);
+                    ]).exec(function (err, movieReview) {
+                        if (err) {
+                            res.json({message: "Failed"});
+                        } else {
+                            res.json(movieReview);
+                        }
                     })
-
                 }
-                else {res.status(400);
+                else {
+                    res.status(400);
                     res.json({success: false, message: "The movie '" + title + "' is not in the database."});
                 }
-            });
-        } else {
+            })
+
+        }
+        else {
             Movie.find({title: req.params.title}).select("title releaseYear genre actors").exec(function (err, movieFound)
             {
                 if (err) {
