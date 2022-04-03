@@ -142,18 +142,60 @@ router.route('/movies')
 // getting and updating a specific movie with movie title as parameter
 router.route('/movies/:title')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        console.log(req.body);
-        res = res.status(200);
+        var title = req.body.title;
 
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+        if (req.query.reviews === 'true'){
+
+            Movie.findOne({title: req.body.title}).select('title').exec(function (err, movieFound) {
+                if (err) res.send(err);
+
+                else if(movieFound)
+                {
+                    Movie.aggregate([
+                        {
+                            $match: {
+                                title: title
+                            }
+                        },
+                        {
+                            "$lookup":
+                                {
+                                    from: "reviews",
+                                    localField: "title",
+                                    foreignField: "movieTitle",
+                                    as: "movieReviews"
+                                }
+                        }
+                    ]).exec((err, movieReview) => {
+                        if (err) res.json({message: "Failed"});
+                        res.json(movieReview);
+                    })
+
+                }
+                else {res.status(400);
+                    res.json({success: false, message: "The movie '" + title + "' is not in the database."});
+                }
+            });
+        } else {
+            Movie.find({title: req.body.title}).select("title releaseYear genre actors").exec(function (err, movie) {
+                if (err) {
+                    return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
+                }
+                if (movie && movie.length > 0) {
+                    return res.status(200).json({
+                        success: true,
+                        message: "Successfully retrieved movie.",
+                        movie: movie
+                    });
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Unable to retrieve a match for title passed in."
+                    });
+                }
+
+            })
         }
-        Movie.find({title: req.params.title}).exec(function (err, movie) {
-            if (err) {
-                res.send(err);
-            }
-            res.json(movie);
-        })
     })
     .delete(authJwtController.isAuthenticated, function (req, res) {
         console.log(req.body);
@@ -240,7 +282,7 @@ router.route('/reviews')
                 }
             })
     });
-
+/*
 router.route('/reviews')
     .get(authJwtController.isAuthenticated, function (req, res) {
         var title = req.body.title;
@@ -293,7 +335,7 @@ router.route('/reviews')
                 }
             })
         }
-    });
+    });*/
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
 module.exports = app; // for testing only
