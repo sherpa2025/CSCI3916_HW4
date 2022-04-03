@@ -175,7 +175,7 @@ router.route('/movies/:title')
                 }
                 else {
                     res.status(400);
-                    res.json({success: false, message: "The movie '" + title + "' cvc is not in the database."});
+                    res.json({success: false, message: "The movie 'cvc' is not in the database."});
                 }
             })
 
@@ -188,7 +188,8 @@ router.route('/movies/:title')
                 }
                 else if (movieFound == null) {
                     res.status(400);
-                    res.json({success: false, message: "The movie '" + title + "' is afa not in the database."});
+                    res.json({success: false, message: "The movie 'afa' is not in the database."});
+
                 }
                 else {
                     res.json(movieFound)
@@ -277,7 +278,6 @@ router.route('/reviews')
                         }
                     })
                 } else {
-                    //var movieTitle = req.body.movieTitle.replace(/\//g, '')
                     res.status(400);
                     res.json({message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
                 }
