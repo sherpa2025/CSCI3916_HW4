@@ -142,12 +142,14 @@ router.route('/movies')
 // getting and updating a specific movie with movie title as parameter
 router.route('/movies/:title')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        var title = req.body.title;
+        var title = req.params.title;
 
         if (req.query && req.query.reviews && req.query.reviews === "true"){
 
-            Movie.findOne({title: req.params.title}).select('title').exec(function (err, movieFound) {
-                if (err) res.send(err);
+            Movie.findOne({title: req.params.title}).exec(function (err, movieFound) {
+                if (err) {
+                    return res.status(403).json({success: false, message: "Unable to get reviews for title passed in"});
+                }
 
                 else if(movieFound)
                 {
