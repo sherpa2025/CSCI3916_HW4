@@ -144,9 +144,9 @@ router.route('/movies/:title')
     .get(authJwtController.isAuthenticated, function (req, res) {
         var title = req.body.title;
 
-        if (req.query.reviews === 'true'){
+        if (req.query && req.query.reviews && req.query.reviews === "true"){
 
-            Movie.findOne({title: req.body.title}).select('title').exec(function (err, movieFound) {
+            Movie.findOne({title: req.params.title}).select('title').exec(function (err, movieFound) {
                 if (err) res.send(err);
 
                 else if(movieFound)
@@ -177,22 +177,19 @@ router.route('/movies/:title')
                 }
             });
         } else {
-            Movie.find({title: req.body.title}).select("title releaseYear genre actors").exec(function (err, movie) {
+            Movie.find({title: req.params.title}).select("title releaseYear genre actors").exec(function (err, movieFound)
+            {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
                 }
-                if (movie && movie.length > 0) {
-                    return res.status(200).json({
-                        success: true,
-                        message: "Successfully retrieved movie.",
-                        movie: movie
-                    });
-                } else {
-                    return res.status(404).json({
-                        success: false,
-                        message: "Unable to retrieve a match for title passed in."
-                    });
+                else if (movieFound == null) {
+                    res.status(400);
+                    res.json({success: false, message: "The movie '" + title + "' is not in the database."});
                 }
+                else {
+                    res.json(movieFound)
+                }
+
 
             })
         }
