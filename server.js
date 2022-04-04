@@ -267,11 +267,11 @@ router.route('/reviews')
                 } else {
                     reviewNew.user_id = ver_res.id;
 
-                    Movie.findOne({title: req.body.title}, function(err, movie) {
+                    Movie.findOne({title: req.body.movieTitle}).select('title').exec(function (err, movieFound)  {
                         if (err) {
                             return res.status(403).json({success: false, message: "Unable to post review for title passed in"});
-                        } else if (!movie) {
-                            return res.status(403).json({success: false, message: "Unable to find title to post review for."});
+                        } else if (!movieFound) {
+                            return res.status(403).json({success: false, message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database. "});
                         } else {
                             reviewNew.Name = req.body.Name;
                             reviewNew.movieTitle = req.body.movieTitle;
