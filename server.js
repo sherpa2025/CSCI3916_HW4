@@ -165,14 +165,14 @@ router.route('/movies/:title')
                 }
             })
         } else {
-            Movie.find({title: req.params.title}).select("title releaseYear genre actors").exec(function (err, movieFound) {
+            Movie.find({title: req.params.title}).exec(function (err, movieFound) {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
                 } else if (movieFound) {
                     res.json(movieFound)
-                } else {
-                    res.status(400);
-                    return res.json({success: false, message: "The movie is not in the database."});
+                }
+                else {
+                    res.json({success: false, message: "The movie is not in the database."});
                 }
 
 
