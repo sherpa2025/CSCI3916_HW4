@@ -175,7 +175,7 @@ router.route('/movies/:title')
                 }
                 else {
                     res.status(400);
-                    res.json({success: false, message: "The movie 'cvc' is not in the database."});
+                    return res.json({success: false, message: "The movie is not in the database."});
                 }
             })
 
@@ -189,7 +189,7 @@ router.route('/movies/:title')
                 else if (movieFound) { res.json(movieFound)}
                 else {
                     res.status(400);
-                    return res.json({success: false, message: "The movie 'afa' is not in the database."});
+                    return res.json({success: false, message: "The movie is not in the database."});
                 }
 
 
@@ -255,30 +255,42 @@ router.route('/reviews')
             res.json({success: false, message: "Movie review must have a rating."})
         } else if (req.body.rating < 1 || req.body.rating > 5) {
             res.json({success: false, message: "Rating must be between 1 and 5."})
-        } else
-            Movie.findOne({title: req.body.movieTitle}).select('title').exec(function (err, movieFound) {
-                if (err) res.send(err);
+        }
+        else {
+            var reviewNew = new Review();
 
-                if (movieFound) {
-                    let reviewNew = new Review();
-                    reviewNew.Name = req.body.Name;
-                    reviewNew.movieTitle = req.body.movieTitle;
-                    reviewNew.review = req.body.review;
-                    reviewNew.rating = req.body.rating;
+            // retrieve authorization from authorization header and remove first 4 characters to get just the token
+            jwt.verify(req.headers.authorization.substring(4), process.env.SECRET_KEY, function(err, ver_res) {
+                if (err)
+                {
+                    return res.status(403).json({success: false, message: "Unable to post review passed in."});
+                } else {
+                    reviewNew.user_id = ver_res.id;
 
-                    // save the movie
-                    reviewNew.save(function (err) {
+                    Movie.findOne({title: req.body.title}, function(err, movie) {
                         if (err) {
-                            return res.send(err);
+                            return res.status(403).json({success: false, message: "Unable to post review for title passed in"});
+                        } else if (!movie) {
+                            return res.status(403).json({success: false, message: "Unable to find title to post review for."});
                         } else {
-                            res.json({success: true, message: 'New review created!'});
+                            reviewNew.Name = req.body.Name;
+                            reviewNew.movieTitle = req.body.movieTitle;
+                            reviewNew.review = req.body.review;
+                            reviewNew.rating = req.body.rating;
+                            reviewNew.save (function (err) {
+                                if (err) {
+                                    return res.status(403).json({success: false, message: "Unable to post review for title passed in."});
+                                } else {
+                                    trackDimension(movie.genre, 'post/review', 'POST', reviewNew.rating, movie.title, '1');
+
+                                    return res.status(200).json({success: true, message: "Successfully posted review for title passed in.", movie: movie});
+                                }
+                            })
                         }
                     })
-                } else {
-                    res.status(400);
-                    res.json({message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
                 }
             })
+        }
     });
 /*
 router.route('/reviews')
