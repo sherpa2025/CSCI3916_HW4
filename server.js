@@ -82,24 +82,41 @@ router.post('/signin', function (req, res) {
 
 router.route('/movies')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        console.log(req.body);
-        res = res.status(200);
 
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+        if (req.query && req.query.reviews && req.query.reviews === "true") {
+
+            Movie.find(function(err, movie) {
+                if (err) {
+                    return res.status(403).json({success: false, message: "Unable to get reviews for title passed!"});
+                } else if (!movie) {
+                    return res.status(403).json({success: false, message:  "No movie in the database."});
+                } else {
+
+                    Movie.aggregate()
+                        .lookup({from: 'reviews', localField: 'title', foreignField: 'movieTitle', as: 'movieReviews'})
+                        .exec (function(err, movieReview) {
+                            if (err) {
+                                return res.status(403).json({success: false, message: "The movie title parameter was not found."});
+                            } else {
+                                res.json(movieReview);
+                            }
+
+                        })
+                }
+            })
+        } else {
+            Movie.find().exec(function (err, movies) {
+                if (err) {
+                    res.send(err);
+                }
+                if (movies.length < 1) {
+                    res.json({success: false, message: 'No movies found.'});
+                }
+                else {
+                    res.json(movies);
+                }
+            })
         }
-
-        Movie.find().exec(function (err, movies) {
-            if (err) {
-                res.send(err);
-            }
-            if (movies.length < 1) {
-                res.json({success: false, message: 'No movies found.'});
-            }
-            else {
-                res.json(movies);
-            }
-        })
     })
     .post(authJwtController.isAuthenticated, function (req, res) {
         const { title, releaseYear, genre, actors } = req.body;
