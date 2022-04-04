@@ -170,7 +170,7 @@ router.route('/movies/:title')
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
                 } else if (movieFound)
                 {
-                    if (!movieFound) {return res.status(403).json({success: true, message: "work."});}
+                    if (!res.json(movieFound)) {return res.status(403).json({success: true, message: "work."});}
                     res.json(movieFound)
                 }
                 else {
