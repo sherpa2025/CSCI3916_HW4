@@ -165,16 +165,16 @@ router.route('/movies/:title')
                 }
             })
         } else {
-            Movie.find({title: req.params.title}).exec(function (err, movieFound) {
+            Movie.findOne({title: req.params.title}).exec(function (err, movieFound) {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
                 } else if (movieFound)
                 {
-                    if (!res.json(movieFound)) {return res.status(403).json({success: true, message: "work."});}
                     res.json(movieFound)
                 }
                 else {
-                    return res.status(403).json({success: false, message: "The movie is not in database."});
+                    res.status(400);
+                    res.json({success: false, message: "The movie '" + req.params.title + "' is not in the database."});
                 }
 
 
