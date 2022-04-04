@@ -168,8 +168,9 @@ router.route('/movies/:title')
             Movie.find({title: req.params.title}).exec(function (err, movieFound) {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
-                } else if (movieFound) {
-                    return res.status(403).json({success: true, message: "work."});
+                } else if (movieFound) 
+                {
+                    if (movieFound == NULL ) {return res.status(403).json({success: true, message: "work."});}
                     res.json(movieFound)
                 }
                 else {
