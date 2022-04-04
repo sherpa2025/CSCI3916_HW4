@@ -281,9 +281,7 @@ router.route('/reviews')
                                 if (err) {
                                     return res.status(403).json({success: false, message: "Unable to post review for title passed in."});
                                 } else {
-                                    trackDimension(movie.genre, 'post/review', 'POST', reviewNew.rating, movie.title, '1');
-
-                                    return res.status(200).json({success: true, message: "Successfully posted review for title passed in.", movie: movie});
+                                    res.json({success: true, message: 'New review created for movie: ' + req.body.movieTitle});
                                 }
                             })
                         }
