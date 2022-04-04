@@ -142,52 +142,35 @@ router.route('/movies')
 router.route('/movies/:title')
     .get(authJwtController.isAuthenticated, function (req, res) {
         var title = req.params.title;
+        if (req.query && req.query.reviews && req.query.reviews === "true") {
 
-        if (req.query && req.query.reviews && req.query.reviews === "true")
-        {
-
-            Movie.findOne({title: req.params.title},function(err, movieFound) {
+            Movie.findOne({title: req.params.title}, function(err, movie) {
                 if (err) {
-                    return res.status(403).json({success: false, message: "Unable to get reviews for title passed in"});
-                } else if (movieFound) {
-                    Movie.aggregate([
-                        {
-                            $match: {
-                                title: title
+                    return res.status(403).json({success: false, message: "Unable to get reviews for title passed!"});
+                } else if (!movie) {
+                    return res.status(403).json({success: false, message:  "The movie \'" + title+ "\' is not in the database."});
+                } else {
+
+                    Movie.aggregate()
+                        .match({title : title})
+                        .lookup({from: 'reviews', localField: 'title', foreignField: 'movieTitle', as: 'movieReviews'})
+                        .exec (function(err, movieReview) {
+                            if (err) {
+                                return res.status(403).json({success: false, message: "The movie title parameter was not found."});
+                            } else {
+                                res.json(movieReview);
                             }
-                        },
-                        {
-                            "$lookup":
-                                {
-                                    from: "reviews",
-                                    localField: "title",
-                                    foreignField: "movieTitle",
-                                    as: "movieReviews"
-                                }
-                        }
-                    ]).exec(function (err, movieReview) {
-                        if (err) {
-                            res.json({message: "Failed"});
-                        } else {
-                            res.json(movieReview);
-                        }
-                    })
-                }
-                else {
-                    res.status(400);
-                    return res.json({success: false, message: "The movie is not in the database."});
+
+                        })
                 }
             })
-
-        }
-        else {
-            Movie.find({title: req.params.title}).select("title releaseYear genre actors").exec(function (err, movieFound)
-            {
+        } else {
+            Movie.find({title: req.params.title}).select("title releaseYear genre actors").exec(function (err, movieFound) {
                 if (err) {
                     return res.status(403).json({success: false, message: "Unable to retrieve title passed in."});
-                }
-                else if (movieFound) { res.json(movieFound)}
-                else {
+                } else if (movieFound) {
+                    res.json(movieFound)
+                } else {
                     res.status(400);
                     return res.json({success: false, message: "The movie is not in the database."});
                 }
